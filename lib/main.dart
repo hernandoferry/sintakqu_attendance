@@ -1,37 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:sintakqu_attendance/features/attendance/presentation/screens/main_shell.dart';
 import 'package:sintakqu_attendance/features/auth/presentation/screens/login_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  // Pastikan Flutter binding siap sebelum operasi async
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Cek apakah token tersimpan dari sesi sebelumnya
+  const storage = FlutterSecureStorage();
+  final token = await storage.read(key: 'auth_token');
+  final bool isLoggedIn = token != null && token.isNotEmpty;
+
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool isLoggedIn;
+  const MyApp({super.key, required this.isLoggedIn});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Sintakqu Attendance',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const LoginScreen(),
+      // Jika token ada → langsung ke MainShell, jika tidak → ke LoginScreen
+      initialRoute: isLoggedIn ? '/attendanceScreen' : '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/attendanceScreen': (context) => const MainShell(),
+      },
     );
   }
 }

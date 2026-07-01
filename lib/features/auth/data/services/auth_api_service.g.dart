@@ -20,7 +20,7 @@ class _AuthApiService implements AuthApiService {
   final ParseErrorLogger? errorLogger;
 
   @override
-  Future<HttpResponse<Map<String, dynamic>>> login(
+  Future<HttpResponse<LoginResponseModel>> login(
     Map<String, dynamic> body,
   ) async {
     final _extra = <String, dynamic>{};
@@ -28,7 +28,7 @@ class _AuthApiService implements AuthApiService {
     final _headers = <String, dynamic>{};
     final _data = <String, dynamic>{};
     _data.addAll(body);
-    final _options = _setStreamType<HttpResponse<Map<String, dynamic>>>(
+    final _options = _setStreamType<HttpResponse<LoginResponseModel>>(
       Options(method: 'POST', headers: _headers, extra: _extra)
           .compose(
             _dio.options,
@@ -39,12 +39,9 @@ class _AuthApiService implements AuthApiService {
           .copyWith(baseUrl: _combineBaseUrls(_dio.options.baseUrl, baseUrl)),
     );
     final _result = await _dio.fetch<Map<String, dynamic>>(_options);
-    late Map<String, dynamic> _value;
+    late LoginResponseModel _value;
     try {
-      _value = _result.data!.map(
-        (k, dynamic v) =>
-            MapEntry(k, v as dynamic),
-      );
+      _value = LoginResponseModel.fromJson(_result.data!);
     } on Object catch (e, s) {
       errorLogger?.logError(e, s, _options, response: _result);
       rethrow;

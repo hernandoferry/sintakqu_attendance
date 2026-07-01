@@ -1,4 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../../../../core/network/dio_client.dart';
+import '../../../auth/data/models/login_response_model.dart';
+import '../../../auth/data/services/auth_api_service.dart';
 
 class AppColors {
   static const Color primary = Color(0xFF1976D2);
@@ -17,8 +23,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
   bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -51,6 +57,84 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     return null;
+  }
+
+  Future<void> _handleLogin() async {
+    // 1. Ubah status menjadi loading untuk memunculkan indikator berputar
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // 2. Buat instance DioClient lalu AuthApiService yang membutuhkan Dio
+      final dioClient = DioClient();
+      final authService = AuthApiService(dioClient.dio);
+
+      // 3. Panggil method login dari Retrofit service
+      final httpResponse = await authService.login({
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text,
+      });
+
+      // 4. Cek jika server mengembalikan status sukses (200 OK)
+      if (httpResponse.response.statusCode == 200) {
+        // Retrofit sudah otomatis parse response menjadi LoginResponseModel
+        LoginResponseModel loginResult = httpResponse.data;
+
+        // Ambil token dan nama user untuk kebutuhan aplikasi
+        // ignore: unused_local_variable
+        String? token = loginResult.data?.token;
+        String? userName = loginResult.data?.user?.name;
+
+        // Simpan token ke Flutter Secure Storage agar sesi tetap aktif
+        if (token != null) {
+          const storage = FlutterSecureStorage();
+          await storage.write(key: 'auth_token', value: token);
+        }
+
+        if (mounted) {
+          // Tampilkan pesan sukses kepada user
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Selamat datang kembali, $userName!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Pindahkan user ke halaman utama/dashboard dan hapus riwayat halaman login
+          Navigator.pushReplacementNamed(context, '/attendanceScreen');
+        }
+      }
+    } on DioException catch (e) {
+      // 5. Tangani error respons dari server (misal: password salah / email tidak terdaftar)
+      String errorMessage = 'Terjadi kesalahan jaringan.';
+
+      if (e.response != null && e.response?.data != null) {
+        try {
+          // Parsing pesan error menggunakan model yang sama jika format JSON error-nya seragam
+          LoginResponseModel errorResult = LoginResponseModel.fromJson(
+            e.response?.data,
+          );
+          errorMessage = errorResult.message ?? errorMessage;
+        } catch (_) {
+          // Jika format JSON error berbeda, ambil field 'message' secara manual secara aman
+          errorMessage = e.response?.data['message'] ?? errorMessage;
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      // 6. Matikan status loading jika proses sudah selesai (baik sukses maupun error)
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -224,18 +308,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                onPressed: () {
-                                  if (_formKey.currentState!.validate()) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                          'Login berhasil divalidasi!',
-                                        ),
-                                        backgroundColor: AppColors.accent,
-                                      ),
-                                    );
-                                  }
-                                },
+                                // Panggil _handleLogin() setelah validasi form berhasil
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        if (_formKey.currentState!.validate()) {
+                                          _handleLogin();
+                                        }
+                                      },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0XFF002B73),
                                   foregroundColor: Colors.white,
@@ -246,13 +326,23 @@ class _LoginScreenState extends State<LoginScreen> {
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                child: const Text(
-                                  'Masuk',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                // Tampilkan loading indicator saat sedang proses login
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : const Text(
+                                        'Masuk',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                               ),
                             ),
 
