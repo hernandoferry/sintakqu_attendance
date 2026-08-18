@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sintakqu_attendance/splash_screen.dart';
+import 'package:sintakqu_attendance/feature/register/registrasi.dart';
+// import 'package:sintakqu_attendance/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +15,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: SplashScreen(),
+      // home: SplashScreen(),
+      home: Registrasi(),
     );
   }
 }
