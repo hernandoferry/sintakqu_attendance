@@ -42,7 +42,11 @@ class SplashScreen extends StatelessWidget {
               Row(
                 children: [
                   Spacer(),
-                  Icon(Icons.security_rounded, size: 15),
+                  Icon(
+                    Icons.security_rounded,
+                    size: 15,
+                    color: Color(0xFF737685),
+                  ),
                   SizedBox(width: 3),
                   Text(
                     'Secure Check-in',
