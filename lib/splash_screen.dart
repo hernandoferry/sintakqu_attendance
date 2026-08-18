@@ -38,14 +38,22 @@ class SplashScreen extends StatelessWidget {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Secure Check-in',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF737685),
-                ),
+
+              Row(
+                children: [
+                  Spacer(),
+                  Icon(Icons.security_rounded, size: 15),
+                  SizedBox(width: 3),
+                  Text(
+                    'Secure Check-in',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF737685),
+                    ),
+                  ),
+                  Spacer(),
+                ],
               ),
             ],
           ),
