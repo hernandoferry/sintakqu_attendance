@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sintakqu_attendance/feature/register/registrasi.dart';
+import 'package:sintakqu_attendance/forgot_password.dart';
+// import 'package:sintakqu_attendance/feature/register/registrasi.dart';
 // import 'package:sintakqu_attendance/splash_screen.dart';
 
 void main() {
@@ -16,7 +17,8 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
       // home: SplashScreen(),
-      home: Registrasi(),
+      // home: Registrasi(),
+      home: ForgotPassword(),
     );
   }
 }
